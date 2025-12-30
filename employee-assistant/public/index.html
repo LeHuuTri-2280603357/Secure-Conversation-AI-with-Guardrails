@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Assistant - AI Chat</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.6s ease-out;
+            position: relative;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out;
+            position: relative;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        /* Info Button */
+        .info-button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 20px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: slideUp 0.4s ease-out;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .modal-header h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .modal-header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: 40px;
+            text-align: center;
+            overflow-y: auto;
+            flex: 1;
+            max-height: calc(85vh - 150px);
+            position: relative;
+        }
+        
+        /* Scroll indicator - shadow at bottom when there's more content */
+        .modal-body::after {
+            content: '';
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Custom Scrollbar */
+        .modal-body::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .modal-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .logo-container {
+            margin-bottom: 30px;
+            animation: fadeIn 0.6s ease-out 0.2s both;
+        }
+        
+        .logo-container img {
+            max-width: 400px;
+            width: 100%;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+        }
+        
+        .team-info {
+            margin: 30px 0;
+            animation: fadeIn 0.6s ease-out 0.4s both;
+        }
+        
+        .team-info h3 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        
+        .member-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+        
+        .member-card:hover {
+            transform: translateX(10px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .member-card h4 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+        }
+        
+        .member-card p {
+            color: #666;
+            font-size: 1em;
+        }
+        
+        .document-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+            animation: fadeIn 0.6s ease-out 0.6s both;
+        }
+        
+        .document-section h3 {
+            color: #667eea;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+        
+        .document-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .doc-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .doc-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        .doc-button.secondary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .doc-button.secondary:hover {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+        }
+        
+        /* Content Area */
+        .content-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: white;
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        textarea:hover {
+            border-color: #764ba2;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        button:active {
+            transform: translateY(-1px) scale(0.95);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button.secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
+        }
+        
+        button.secondary:hover {
+            box-shadow: 0 8px 25px rgba(107, 114, 128, 0.5);
+        }
+        
+        button span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        /* Result Boxes */
+        .result {
+            margin-top: 25px;
+            padding: 25px;
+            border-radius: 15px;
+            display: none;
+            animation: slideInUp 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { height: 0; }
+            to { height: 100%; }
+        }
+        
+        .result.success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left: 5px solid #10b981;
+        }
+        
+        .result.success::before {
+            background: #10b981;
+        }
+        
+        .result.error {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-left: 5px solid #ef4444;
+        }
+        
+        .result.error::before {
+            background: #ef4444;
+        }
+        
+        .result.warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 5px solid #f59e0b;
+        }
+        
+        .result.warning::before {
+            background: #f59e0b;
+        }
+        
+        .result h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            animation: fadeIn 0.6s ease-out 0.2s both;
+        }
+        
+        .result p {
+            margin-bottom: 10px;
+            line-height: 1.8;
+            animation: fadeIn 0.6s ease-out 0.4s both;
+        }
+        
+        .result em {
+            display: block;
+            margin-top: 15px;
+            font-style: normal;
+            font-weight: 600;
+        }
+        
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple-animation 0.6s ease-out;
+            pointer-events: none;
+        }
+        
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        /* Fade out animation */
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+            
+            .info-button {
+                position: static;
+                margin: 0 auto 20px;
+            }
+            
+            .header {
+                padding-top: 60px;
+            }
+            
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+                max-height: 90vh;
+            }
+            
+            .modal-body {
+                padding: 25px;
+                max-height: calc(90vh - 150px);
+            }
+            
+            .logo-container img {
+                max-width: 100%;
+            }
+            
+            .document-buttons {
+                flex-direction: column;
+            }
+            
+            .doc-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="info-button" onclick="openModal()">
+                <span>ℹ️</span>
+                <span>Thông tin</span>
+            </button>
+            <h1>💬 Chat với AI Assistant</h1>
+            <p class="subtitle">Trò chuyện an toàn với trợ lý thông minh</p>
+        </div>
+        
+        <!-- Content Area for Chat -->
+        <div class="content-area">
+            <div class="input-group">
+                <label for="chat-message">💭 Tin nhắn của bạn:</label>
+                <textarea id="chat-message" placeholder="Ví dụ: Xin chào, tôi cần hỗ trợ..."></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="sendMessage()">
+                    <span>📤 Gửi tin nhắn</span>
+                </button>
+                <button class="secondary" onclick="clearChat()">
+                    <span>🗑️ Xóa</span>
+                </button>
+            </div>
+            
+            <div class="loading" id="chat-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">AI đang suy nghĩ...</div>
+            </div>
+            
+            <div id="chat-result" class="result"></div>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>📋 Thông tin Đồ án</h2>
+                <p>Đồ Án Chuyên Nghành Công Nghệ Thông Tin</p>
+            </div>
+            <div class="modal-body">
+                <div class="logo-container">
+                    <img src="https://img5.thuthuatphanmem.vn/uploads/2021/07/14/logo-hutech_012636239.png" alt="HUTECH University Logo">
+                </div>
+                
+                <div class="team-info">
+                    <h3>👥 Thành viên nhóm</h3>
+                    
+                    <div class="member-card">
+                        <h4>Lê Hữu Trí</h4>
+                        <p>MSSV: 2280603357 | Lớp: 22DTHA2</p>
+                    </div>
+                    
+                    <div class="member-card">
+                        <h4>Trần Công Thịnh</h4>
+                        <p>MSSV: 2280615510 | Lớp: 22DTHC1</p>
+                    </div>
+                </div>
+                
+                <div class="document-section">
+                    <h3>📄 Tài liệu đồ án</h3>
+                    <div class="document-buttons">
+                        <a href="d:\Windows Data\DACN\DoAnChuyenNghanh.docx" target="_blank" class="doc-button">
+                            <span>👁️</span>
+                            <span>Xem tài liệu</span>
+                        </a>
+                        <a href="d:\Windows Data\DACN\DoAnChuyenNghanh.docx" download class="doc-button secondary">
+                            <span>⬇️</span>
+                            <span>Tải về</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        function openModal() {
+            document.getElementById('infoModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('infoModal');
+            modal.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.style.animation = '';
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('infoModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+        
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Add ripple effect to buttons
+        function createRipple(event) {
+            const button = event.currentTarget;
+            const ripple = document.createElement('span');
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = event.clientX - rect.left - size / 2;
+            const y = event.clientY - rect.top - size / 2;
+            
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.classList.add('ripple');
+            
+            button.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        }
+        
+        // Add ripple effect to all buttons
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', createRipple);
+        });
+        
+        async function sendMessage() {
+            const message = document.getElementById('chat-message').value.trim();
+            if (!message) {
+                showNotification('⚠️ Vui lòng nhập tin nhắn', 'warning');
+                return;
+            }
+            
+            const loading = document.getElementById('chat-loading');
+            const resultDiv = document.getElementById('chat-result');
+            
+            loading.style.display = 'block';
+            resultDiv.style.display = 'none';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>🤖 AI Assistant đã trả lời:</h3>
+                        <p><strong>Tin nhắn của bạn:</strong> ${data.user_message}</p>
+                        <p><strong>Phản hồi:</strong> ${data.ai_response}</p>
+                        ${data.is_safe ? '<p><em>✅ Cuộc trò chuyện an toàn và được bảo mật</em></p>' : ''}
+                    `;
+                } else {
+                    resultDiv.className = 'result warning';
+                    resultDiv.innerHTML = `
+                        <h3>⚠️ Tin nhắn bị chặn</h3>
+                        <p>${data.message || 'Guardrail đã chặn tin nhắn này vì lý do bảo mật'}</p>
+                        ${data.reasons ? `<p><strong>Lý do:</strong> ${data.reasons.join(', ')}</p>` : ''}
+                    `;
+                }
+                
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Lỗi kết nối</h3>
+                    <p>Không thể kết nối đến máy chủ: ${error.message}</p>
+                `;
+                resultDiv.style.display = 'block';
+            }
+        }
+        
+        function clearChat() {
+            document.getElementById('chat-message').value = '';
+            const resultDiv = document.getElementById('chat-result');
+            resultDiv.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+                resultDiv.style.animation = '';
+            }, 300);
+            document.getElementById('chat-loading').style.display = 'none';
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `result ${type}`;
+            notification.innerHTML = `<p>${message}</p>`;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '1000';
+            notification.style.maxWidth = '400px';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Allow sending message with Enter key (Shift+Enter for new line)
+        document.getElementById('chat-message').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
